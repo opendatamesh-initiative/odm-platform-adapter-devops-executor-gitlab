@@ -1,0 +1,23 @@
+quarkus:
+  http:
+    port: 9080
+  datasource:
+    active: false
+    devservices:
+      enabled: false
+  hibernate-orm:
+    active: false
+  log:
+    category:
+      "org.executor":
+        level: DEBUG
+
+executor:
+  simulation:
+    run-duration: 5s
+    outcome: SUCCEEDED
+
+"%test":
+  executor:
+    simulation:
+      run-duration: 200ms

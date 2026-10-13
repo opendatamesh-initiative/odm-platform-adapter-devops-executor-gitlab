@@ -1,0 +1,12 @@
+spec: backend-service-template-state
+specVersion: "1.0.0"
+templateName: blindata-backend-service-template-quarkus
+templateVersion: "1.0.1"
+parameters:
+  groupId: org.opendatamesh
+  artifactId: odm-platform-adapter-devops-executor-starter
+  serviceName: executor-starter
+  serviceClassPrefix: ExecutorStarter
+  basePackage: org.executor
+  basePackagePath: org/executor
+  description: Reference implementation of the DevOps executor v2 API
