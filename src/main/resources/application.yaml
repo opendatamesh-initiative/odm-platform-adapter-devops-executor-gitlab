@@ -1,23 +1,32 @@
 quarkus:
   http:
     port: 9080
-  datasource:
-    active: false
-    devservices:
-      enabled: false
-  hibernate-orm:
-    active: false
   log:
     category:
-      "org.executor":
-        level: DEBUG
-
+      "org.opendatamesh.platform.up.executor.gitlab":
+        level: INFO
 executor:
-  simulation:
-    run-duration: 5s
-    outcome: SUCCEEDED
-
+  gitlab:
+    default-base-url: https://gitlab.com
+    allowed-base-urls:
+      - https://gitlab.com
+    http:
+      connect-timeout: 5s
+      read-retries: 2
+    input-spec:
+      cache-miss-retry-interval: 1s
+      cache-miss-budget: 20s
+    logs:
+      max-job-log-size: 1M
+      max-total-size: 5M
 "%test":
+  quarkus:
+    http:
+      test-port: 0
   executor:
-    simulation:
-      run-duration: 200ms
+    gitlab:
+      http:
+        read-retries: 0
+      input-spec:
+        cache-miss-retry-interval: 50ms
+        cache-miss-budget: 300ms

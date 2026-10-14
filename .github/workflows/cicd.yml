@@ -1,11 +1,11 @@
-name: odm-platform-adapter-devops-executor-starter CI/CD
+name: odm-platform-adapter-devops-executor-gitlab CI/CD
 
 on:
   release:
     types: [created]
 
 env:
-  IMAGE_NAME: odm-platform-adapter-devops-executor-starter
+  IMAGE_NAME: odm-platform-adapter-devops-executor-gitlab
 
 jobs:
   verify-version:

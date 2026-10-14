@@ -1,4 +1,4 @@
-name: odm-platform-adapter-devops-executor-starter CI
+name: odm-platform-adapter-devops-executor-gitlab CI
 on:
   push:
     branches:

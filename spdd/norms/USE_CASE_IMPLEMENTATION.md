@@ -15,7 +15,7 @@ The flow is:
 
 ### Hard boundaries (use case package)
 
-- **REST resources (`*CommandRes`, `*ResultRes`, and any `*Res`) MUST NOT** be referenced inside the use case package (`org.executor.<aggregate>.services.usecases.*`). They belong to the HTTP adapter; only the **use cases service** (and the JAX-RS resource) may use them. Do not put those types in a versioned `rest` package.
+- **REST resources (`*CommandRes`, `*ResultRes`, and any `*Res`) MUST NOT** be referenced inside the use case package (`org.opendatamesh.platform.up.executor.gitlab.<aggregate>.services.usecases.*`). They belong to the HTTP adapter; only the **use cases service** (and the JAX-RS resource) may use them. Do not put those types in a versioned `rest` package.
 - **Commands** passed into the use case MUST carry **domain data only**: JPA **entities**, value types, or **small immutable records** you declare for denormalized input—never API DTOs.
 - **Presenters** MUST accept **domain results** (entities, domain records, or primitives)—not `*Res` types.
 - **Outbound port implementations** (`*OutboundPortImpl`) MUST be **plain Java classes** (no `@ApplicationScoped` or other CDI stereotypes). The **factory** is the only `@ApplicationScoped` bean in that slice: it constructs port impls with `new` and passes **injected collaborators** (core services, mappers, clients, `TransactionalOutboundPort`) into their constructors. Port interfaces stay free of framework types.
@@ -48,12 +48,12 @@ flowchart LR
 
 ---
 
-## 1. Shared building blocks (`org.executor.utils.usecases`)
+## 1. Shared building blocks (`org.opendatamesh.platform.up.executor.gitlab.utils.usecases`)
 
 | Artifact                    | Role                                                                                                                                                                                                                  |
 | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `UseCase`                   | Single method: `void execute()`. Every use case class implements this interface.                                                                                                                                      |
-| `UseCasePresenter`          | Shared presenter base. `presentException(ExecutorStarterApiException)` rethrows that exception. `presentException(Exception)` wraps it in `InternalException`. A use-case presenter may extend this interface. |
+| `UseCasePresenter`          | Shared presenter base. `presentException(ExecutorGitlabApiException)` rethrows that exception. `presentException(Exception)` wraps it in `InternalException`. A use-case presenter may extend this interface. |
 | `TransactionalOutboundPort` | Wraps work in a transaction (`doInTransaction`, `doInTransactionWithResults`). Injected into factories; implemented by `DefaultTransactionalOutboundPortImpl`.                                                      |
 
 `DefaultTransactionalOutboundPortImpl` is `@ApplicationScoped`. It runs the caller’s work with `QuarkusTransaction.joiningExisting()` and, as the first statement on the enlisted PostgreSQL connection, `SET TRANSACTION ISOLATION LEVEL SERIALIZABLE`.
@@ -66,7 +66,7 @@ Use the transactional port inside the use case when the operation must be atomic
 
 ### JAX-RS resource
 
-- **Package:** adopting service, typically next to the aggregate. **Do not** use a versioned `rest` package (`rest.v1`, `rest.v2`) and **do not** put template utilities under `org.executor.rest`. Inbound HTTP helpers that the template ships live in `org.executor.utils.rest`.
+- **Package:** adopting service, typically next to the aggregate. **Do not** use a versioned `rest` package (`rest.v1`, `rest.v2`) and **do not** put template utilities under `org.opendatamesh.platform.up.executor.gitlab.rest`. Inbound HTTP helpers that the template ships live in `org.opendatamesh.platform.up.executor.gitlab.utils.rest`.
 - **Class name:** `*UseCaseResource` (e.g. `DataProductUseCaseResource`).
 - **Annotations:** `@Path`, `@Produces(MediaType.APPLICATION_JSON)`.
 - **Responsibility:** Map HTTP to the corresponding `*UseCasesService` method only. No business rules.
@@ -85,7 +85,7 @@ Use the transactional port inside the use case when the operation must be atomic
 
 ## 3. Use cases service (`*UseCasesService`)
 
-- **Package:** `org.executor.<aggregate>.services` (e.g. `org.executor.dataproduct.services`).
+- **Package:** `org.opendatamesh.platform.up.executor.gitlab.<aggregate>.services` (e.g. `org.opendatamesh.platform.up.executor.gitlab.dataproduct.services`).
 - **Annotation:** `@ApplicationScoped`.
 - **Responsibility:**
   1. Convert `*CommandRes` → domain **command** (record). This is the **only** layer that bridges `*Res` ↔ entities for the use case.
@@ -101,7 +101,7 @@ Keep this class as the single place that knows both REST mapping and use-case bo
 
 ## 4. Use case package layout
 
-For one behavioral slice (e.g. “initialize data product”), colocate under `org.executor.<aggregate>.services.usecases.<name>`:
+For one behavioral slice (e.g. “initialize data product”), colocate under `org.opendatamesh.platform.up.executor.gitlab.<aggregate>.services.usecases.<name>`:
 
 | File                     | Purpose                                                                                                                           |
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
@@ -121,7 +121,7 @@ Optional: split ports by concern (`...PersistenceOutboundPort`, `...Notification
 - Implements `UseCase` and implements `execute()`.
 - **Constructor** receives: command, presenter, outbound ports, and `TransactionalOutboundPort` when transactions are required.
 - **Visibility:** package-private (`class Foo implements UseCase`) so only the factory in the same package constructs it. Construct it with `new`.
-- **Logic:** The use case class must contain **all** of the business logic and **none** of the implementation-detail logic. Validate the command; orchestrate ports; call presenter methods when the business outcome is ready. Throw `ExecutorStarterApiException` subtypes (`BadRequestException`, `NotFoundException`, `InternalException`) for invalid state.
+- **Logic:** The use case class must contain **all** of the business logic and **none** of the implementation-detail logic. Validate the command; orchestrate ports; call presenter methods when the business outcome is ready. Throw `ExecutorGitlabApiException` subtypes (`BadRequestException`, `NotFoundException`, `InternalException`) for invalid state.
 - **No** injection annotations on the use case class itself.
 - **No** CDI annotations on the use case class itself.
 
@@ -173,7 +173,7 @@ The factory is the only place that chooses concrete port implementations for tha
   - **Core layer** services (e.g. `DataProductsService`, `DescriptorVariableCrudService`), or
   - **Clients** (e.g. `NotificationClient`), with entity ↔ `*Res` mapping **inside the impl** when the core API still uses resources.
 - **Visibility:** Port interfaces and their impls are often **package-private** so the boundary stays inside the use case package.
-- **Transactional port:** Shared across use cases; do not reimplement transaction handling inside each use case—delegate to `TransactionalOutboundPort`. `TransactionHandler` (`org.executor.utils.services`) stays the `REQUIRED` / `REQUIRES_NEW` bean for CRUD reads; use-case atomic work uses the port above.
+- **Transactional port:** Shared across use cases; do not reimplement transaction handling inside each use case—delegate to `TransactionalOutboundPort`. `TransactionHandler` (`org.opendatamesh.platform.up.executor.gitlab.utils.services`) stays the `REQUIRED` / `REQUIRES_NEW` bean for CRUD reads; use-case atomic work uses the port above.
 - **No CDI stereotypes on port impls:** If a concern needs to be testable in isolation, use plain `new` in unit tests or test the factory with mocked collaborators. Do not register the impl type as a bean.
 - **Composed method:** Port impls and shared services they call follow [`CODE_STRUCTURE.md`](./CODE_STRUCTURE.md): a public/port method is a high-level sequence of named private steps. They own implementation detail; they must not leak those steps back into the use case, and they must not own business policy that belongs in the use case.
 
@@ -181,8 +181,8 @@ The factory is the only place that chooses concrete port implementations for tha
 
 ## 9. Core services vs use case layer
 
-- **`org.executor.<aggregate>.services.core.*`** (and similar): CRUD, queries, reusable domain operations. Use cases **do not** call these directly from the use case class; they go through outbound ports whose impls delegate to core services.
-- **`org.executor.utils.usecases`:** Cross-cutting use-case infrastructure (`UseCase`, `UseCasePresenter`, `TransactionalOutboundPort`).
+- **`org.opendatamesh.platform.up.executor.gitlab.<aggregate>.services.core.*`** (and similar): CRUD, queries, reusable domain operations. Use cases **do not** call these directly from the use case class; they go through outbound ports whose impls delegate to core services.
+- **`org.opendatamesh.platform.up.executor.gitlab.utils.usecases`:** Cross-cutting use-case infrastructure (`UseCase`, `UseCasePresenter`, `TransactionalOutboundPort`).
 
 ---
 
@@ -195,7 +195,7 @@ The factory is the only place that chooses concrete port implementations for tha
 
 ## 11. Checklist for a new use case
 
-1. Define **command** record (domain only) and **presenter** interface (domain arguments only) in `org.executor.<aggregate>.services.usecases.<name>`.
+1. Define **command** record (domain only) and **presenter** interface (domain arguments only) in `org.opendatamesh.platform.up.executor.gitlab.<aggregate>.services.usecases.<name>`.
 2. Define **outbound port** interfaces and **plain `*OutboundPortImpl` classes** (no CDI annotations). Implement validation/persistence/etc. with collaborators passed from the factory.
 3. Add **`@ApplicationScoped` factory** only: construct port impls and the use case with `new`, inject `TransactionalOutboundPort` and core services/mappers.
 4. Add **`*UseCasesService`** methods (or extend an existing one): map `*CommandRes` → entity/command, run factory + `execute()`, map domain result from presenter to `*ResultRes`.

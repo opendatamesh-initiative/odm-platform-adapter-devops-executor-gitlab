@@ -328,7 +328,7 @@ Input can be provided in two ways:
 
    ### N - Norms
 
-   **Objective**: Define unified coding standards and common implementation patterns for **this repository** (odm-platform-adapter-devops-executor-starter)
+   **Objective**: Define unified coding standards and common implementation patterns for **this repository** (odm-platform-adapter-devops-executor-gitlab)
 
    **Mandatory context**: Step 2 MUST already be complete — norm files were derived from `spdd/norms/README.md` and read via the Read tool. Summarize only norms that apply to this feature; link `spdd/norms/...` paths so `/spdd-generate` can re-read them. Do not invent parallel standards that contradict those files.
 

@@ -2,7 +2,7 @@
 
 CRUD can be implemented through a small hierarchy of abstract classes that follow the **template method** pattern: the base class defines the **algorithm** (order of steps, transactions, error handling), and subclasses supply **hooks** and **type-specific behavior** by implementing abstract methods and optionally overriding protected hook methods.
 
-Base classes live under `org.executor.utils.services`.
+Base classes live under `org.opendatamesh.platform.up.executor.gitlab.utils.services`.
 
 ---
 
@@ -19,7 +19,7 @@ Base classes live under `org.executor.utils.services`.
 - **`T`** — JPA entity.
 - **`ID`** — Primary key type (`Serializable`, e.g. `Long`, `String`).
 - **`R`** — API resource / DTO returned to callers.
-- **`F`** — Search or filter options used to build a `Specification<T>` from `org.executor.utils.repositories`.
+- **`F`** — Search or filter options used to build a `Specification<T>` from `org.opendatamesh.platform.up.executor.gitlab.utils.repositories`.
 
 Pick the **shallowest** layer that fits: if the API does not need a separate `R`, you might only extend `GenericCrudServiceImpl`. When list endpoints support query filters and you expose DTOs, use **`GenericMappedAndFilteredCrudServiceImpl`**.
 
@@ -31,7 +31,7 @@ The concrete service is an `@ApplicationScoped` bean. Callers inject that bean. 
 
 ### `GenericCrudServiceImpl<T, ID>`
 
-1. **`getRepository()`** — Return a `PagingAndSortingAndSpecificationExecutorRepository<T, ID>` (`org.executor.utils.repositories`). Extend `EntityManagerRepository`, which implements that interface and supplies CRUD, paging, sorting, and specifications.
+1. **`getRepository()`** — Return a `PagingAndSortingAndSpecificationExecutorRepository<T, ID>` (`org.opendatamesh.platform.up.executor.gitlab.utils.repositories`). Extend `EntityManagerRepository`, which implements that interface and supplies CRUD, paging, sorting, and specifications.
 
 2. **`validate(T)`** — Business and field validation before create/overwrite. Throw `BadRequestException`, `NotFoundException`, or `InternalException` on failure.
 
@@ -46,9 +46,9 @@ Optional **hooks** (empty defaults; override when needed):
 
 **Utilities:** `exists(ID)` is protected; `findOne(ID)` throws `NotFoundException` when the row is missing.
 
-**Pagination:** `Page`, `PageRequest`, and `Sort` live in `org.executor.utils.repositories`. `findAll` requires a `PageRequest`: `page >= 0` and `size > 0`, otherwise `BadRequestException`. Override `getAllowedSortProperties()` when sortable fields must be restricted. `PageableSortValidator` rejects unknown sort paths via the JPA metamodel, including nested and embedded paths. When `getAllowedSortProperties()` returns a set, a property outside that set is rejected before the metamodel is consulted.
+**Pagination:** `Page`, `PageRequest`, and `Sort` live in `org.opendatamesh.platform.up.executor.gitlab.utils.repositories`. `findAll` requires a `PageRequest`: `page >= 0` and `size > 0`, otherwise `BadRequestException`. Override `getAllowedSortProperties()` when sortable fields must be restricted. `PageableSortValidator` rejects unknown sort paths via the JPA metamodel, including nested and embedded paths. When `getAllowedSortProperties()` returns a set, a property outside that set is rejected before the metamodel is consulted.
 
-**Lifecycle events:** `CrudLifecycleInterceptor` fires `CrudLifecycleEvent` (`CREATED`, `OVERWRITTEN`, `DELETED`) around the write methods. Observers use `@Observes(during = TransactionPhase.AFTER_SUCCESS)`. `HibernateChangeDataCapture` (`org.executor.utils.database`) fires `EntityChangeEvent` from the Hibernate post-insert, post-update, and post-delete listener. Observers of `EntityChangeEvent` use the same `@Observes(during = TransactionPhase.AFTER_SUCCESS)`.
+**Lifecycle events:** `CrudLifecycleInterceptor` fires `CrudLifecycleEvent` (`CREATED`, `OVERWRITTEN`, `DELETED`) around the write methods. Observers use `@Observes(during = TransactionPhase.AFTER_SUCCESS)`. `HibernateChangeDataCapture` (`org.opendatamesh.platform.up.executor.gitlab.utils.database`) fires `EntityChangeEvent` from the Hibernate post-insert, post-update, and post-delete listener. Observers of `EntityChangeEvent` use the same `@Observes(during = TransactionPhase.AFTER_SUCCESS)`.
 
 ### `GenericMappedCrudServiceImpl<R, T, ID>`
 
@@ -117,7 +117,7 @@ To wrap the same methods (history, stewardship, emitters, …), subclass `Generi
 
 - Prefer **`…Resource` methods** for HTTP adapters so the layer works with `R`, not entities.
 - If path parameters must **override** fields in the body (e.g. id in URL vs body), set the field from the path, then call the `*Resource` method.
-- JAX-RS resources live in the adopting service (`@Path`). Do not put them under a versioned `rest` package. Template inbound HTTP helpers live in `org.executor.utils.rest`. Outbound HTTP uses `org.executor.utils.client.RestUtils`.
+- JAX-RS resources live in the adopting service (`@Path`). Do not put them under a versioned `rest` package. Template inbound HTTP helpers live in `org.opendatamesh.platform.up.executor.gitlab.utils.rest`. Outbound HTTP uses `org.opendatamesh.platform.up.executor.gitlab.utils.client.RestUtils`.
 
 ---
 
@@ -142,7 +142,7 @@ Name filters can use `SpecsUtils.escapeLikeParameter`. Return an allow-list from
 
 3. **Repository** must support paging and specifications if you use the filtered base class. Extend `EntityManagerRepository`. Static nested spec helpers on the repository are a common style; `SpecsUtils` combines them with AND/OR.
 
-4. **Throw** `NotFoundException`, `BadRequestException`, `ResourceConflictException`, and `InternalException` (`ExecutorStarterApiException` in `org.executor.exceptions`). The adopting service maps those exceptions to HTTP status codes.
+4. **Throw** `NotFoundException`, `BadRequestException`, `ResourceConflictException`, and `InternalException` (`ExecutorGitlabApiException` in `org.opendatamesh.platform.up.executor.gitlab.exceptions`). The adopting service maps those exceptions to HTTP status codes.
 
 5. If an aggregate **must not** support generic `findAll(PageRequest)`, override those methods and throw an explicit "not supported" (or equivalent) with a clear message.
 

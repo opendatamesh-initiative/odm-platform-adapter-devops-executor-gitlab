@@ -1,6 +1,6 @@
-# SPDD Norms — executor-starter
+# SPDD Norms — executor-gitlab
 
-This folder holds **project-specific engineering norms** for executor-starter. They describe *how* to implement features in this codebase, not *what* to build (that lives in `spdd/prompt/` and `spdd/analysis/`).
+This folder holds **project-specific engineering norms** for executor-gitlab. They describe *how* to implement features in this codebase, not *what* to build (that lives in `spdd/prompt/` and `spdd/analysis/`).
 
 ## SPDD artifacts
 
@@ -18,7 +18,7 @@ Agents and developers running **SPDD** (Structured Prompt-Driven Development) co
 - Generating or syncing implementation code from a prompt
 - Reviewing whether new code matches existing patterns
 
-Treat this directory as the **canonical reference** for executor-starter conventions referenced by prompts. Prefer linking to a norm file here over duplicating long explanations inside every prompt.
+Treat this directory as the **canonical reference** for executor-gitlab conventions referenced by prompts. Prefer linking to a norm file here over duplicating long explanations inside every prompt.
 
 ## How to use with `/spdd-reasons-canvas`
 
@@ -89,13 +89,13 @@ These apply to most backend work surfaced through REASONS-Canvas. Feature-specif
 ### Layering and responsibilities
 
 - **Thin HTTP adapter:** JAX-RS resources map HTTP only; no business rules. Services (use-case service or CRUD service) own orchestration and mapping at the application boundary.
-- **Domain inside the use case package:** Commands and presenters use **entities, value types, or small domain records**—never REST `*Res` types inside `org.executor.<aggregate>.services.usecases.*`.
-- **Core vs use case:** Reusable CRUD/query logic lives in `org.executor.<aggregate>.services.core.*` (or equivalent). Use cases reach core only through **outbound port implementations**, not by injecting core services into the use case class.
+- **Domain inside the use case package:** Commands and presenters use **entities, value types, or small domain records**—never REST `*Res` types inside `org.opendatamesh.platform.up.executor.gitlab.<aggregate>.services.usecases.*`.
+- **Core vs use case:** Reusable CRUD/query logic lives in `org.opendatamesh.platform.up.executor.gitlab.<aggregate>.services.core.*` (or equivalent). Use cases reach core only through **outbound port implementations**, not by injecting core services into the use case class.
 - **Pick the shallowest CRUD base** that fits (`GenericCrudServiceImpl` → mapped → filtered); do not add filter/mapping layers without need.
 
 ### CDI and dependency injection
 
-- **`@Path`** on `*UseCaseResource` in the adopting service (next to the aggregate, or another package the service chooses), with `@Produces(MediaType.APPLICATION_JSON)`. Do not put HTTP adapters under a versioned `rest` package (`rest.v1`, `rest.v2`). Template HTTP helpers live in `org.executor.utils.rest`.
+- **`@Path`** on `*UseCaseResource` in the adopting service (next to the aggregate, or another package the service chooses), with `@Produces(MediaType.APPLICATION_JSON)`. Do not put HTTP adapters under a versioned `rest` package (`rest.v1`, `rest.v2`). Template HTTP helpers live in `org.opendatamesh.platform.up.executor.gitlab.utils.rest`.
 - **`@ApplicationScoped`** on `*UseCasesService` and concrete CRUD service subclasses.
 - **`@ApplicationScoped`** on the use-case **factory only** in that slice; outbound port impls are **plain Java** (`new` in the factory). The use case class is plain Java, constructed with `new`.
 - **No CDI stereotypes** on use case classes or `*OutboundPortImpl`.
@@ -109,8 +109,8 @@ These apply to most backend work surfaced through REASONS-Canvas. Feature-specif
 
 ### Exceptions and API errors
 
-- Throw `NotFoundException`, `BadRequestException`, `ResourceConflictException`, and `InternalException` from `org.executor.exceptions`. They extend `ExecutorStarterApiException` (`getErrorName()`, `getStatus()`).
-- The adopting service maps those exceptions to a consistent HTTP error body; do not leak sensitive internals in messages. Do not put that mapper under `org.executor.rest`.
+- Throw `NotFoundException`, `BadRequestException`, `ResourceConflictException`, and `InternalException` from `org.opendatamesh.platform.up.executor.gitlab.exceptions`. They extend `ExecutorGitlabApiException` (`getErrorName()`, `getStatus()`).
+- The adopting service maps those exceptions to a consistent HTTP error body; do not leak sensitive internals in messages. Do not put that mapper under `org.opendatamesh.platform.up.executor.gitlab.rest`.
 - CRUD **`validate` / `reconcile` / hooks** throw exceptions that the mapper maps to stable HTTP status codes.
 
 ### Data validation
@@ -124,12 +124,12 @@ These apply to most backend work surfaced through REASONS-Canvas. Feature-specif
 - **Use cases:** use shared `TransactionalOutboundPort` (`doInTransaction`, `doInTransactionWithResults`) for atomic work—do not reimplement transaction plumbing per use case. `DefaultTransactionalOutboundPortImpl` runs the work with `QuarkusTransaction.joiningExisting()` and executes `SET TRANSACTION ISOLATION LEVEL SERIALIZABLE` on the PostgreSQL connection before the caller’s work.
 - **CRUD:** the template method in `GenericCrudServiceImpl` runs `create`, `overwrite`, and `delete` as `@Transactional`. `afterCreationCommit` and `afterOverwriteCommit` run from `TransactionSynchronizationRegistry` after `STATUS_COMMITTED`. Mapped reads use `TransactionHandler` (`runInTransaction` is `REQUIRED`, `runInNewTransaction` is `REQUIRES_NEW`) when mapping touches lazy associations.
 - **Lifecycle events:** `CrudLifecycleInterceptor` (a `GenericCrudInterceptor`) fires `CrudLifecycleEvent` around create/overwrite/delete. `HibernateChangeDataCapture` fires `EntityChangeEvent` from the post-insert, post-update, and post-delete listener. Observers use `@Observes(during = TransactionPhase.AFTER_SUCCESS)`. Extra CRUD wraps subclass `GenericCrudInterceptor` and bind with `@GenericCrudIntercepted`.
-- **Outbound HTTP:** call other services through `RestUtils` (`org.executor.utils.client`). Build with `RestUtilsFactory.getRestUtils()`, `getAuthenticatedRestUtils`, `getAsyncRestUtils`, or `getAuthenticatedAsyncRestUtils`. Identifier path variables use `{id}`. Do not put a version segment in that package.
+- **Outbound HTTP:** call other services through `RestUtils` (`org.opendatamesh.platform.up.executor.gitlab.utils.client`). Build with `RestUtilsFactory.getRestUtils()`, `getAuthenticatedRestUtils`, `getAsyncRestUtils`, or `getAuthenticatedAsyncRestUtils`. Identifier path variables use `{id}`. Do not put a version segment in that package.
 
 ### Logging
 
 - SLF4J with class-level logger; log at **info/warn** for business-significant steps and failures; **never** log secrets or credentials.
-- Prefer structured context (identifiers, operation phase) consistent with surrounding modules. `CorrelationIdFilter` (`org.executor.utils.rest`) copies the `CORRELATION_ID` request header to MDC key `correlation_id` and clears it after the response.
+- Prefer structured context (identifiers, operation phase) consistent with surrounding modules. `CorrelationIdFilter` (`org.opendatamesh.platform.up.executor.gitlab.utils.rest`) copies the `CORRELATION_ID` request header to MDC key `correlation_id` and clears it after the response.
 
 ### Testing
 
@@ -173,14 +173,14 @@ HTTP → *UseCaseResource → *UseCasesService → *Factory → UseCase
 
 | Layer | Rule |
 |-------|------|
-| HTTP `*Res` | Only the JAX-RS resource + use cases service; **never** in `org.executor.<aggregate>.services.usecases.*` |
+| HTTP `*Res` | Only the JAX-RS resource + use cases service; **never** in `org.opendatamesh.platform.up.executor.gitlab.<aggregate>.services.usecases.*` |
 | Command | Domain types only (entities, UUIDs, enums, small domain records) |
 | Presenter | Domain result types only; service maps to `*ResultRes` |
 | Use case class | Implements `UseCase`; package-private; plain Java (`new`); **no** CDI annotations |
 | Factory | Sole `@ApplicationScoped` bean in the slice; `build...(Command, Presenter)` returns `UseCase`; wires ports with `new` |
 | `*OutboundPortImpl` | Plain Java; collaborators via constructor from factory |
 
-**Package layout per use case** (`org.executor.<aggregate>.services.usecases.<name>`):
+**Package layout per use case** (`org.opendatamesh.platform.up.executor.gitlab.<aggregate>.services.usecases.<name>`):
 
 | Artifact | Naming / role |
 |----------|----------------|
@@ -190,7 +190,7 @@ HTTP → *UseCaseResource → *UseCasesService → *Factory → UseCase
 | `<Name>Factory.java` | Composition root |
 | `*OutboundPort.java` / `*OutboundPortImpl.java` | Port + adapter |
 
-**Shared types:** `org.executor.utils.usecases.UseCase`, `UseCasePresenter`, `TransactionalOutboundPort` (implemented by `DefaultTransactionalOutboundPortImpl`).
+**Shared types:** `org.opendatamesh.platform.up.executor.gitlab.utils.usecases.UseCase`, `UseCasePresenter`, `TransactionalOutboundPort` (implemented by `DefaultTransactionalOutboundPortImpl`).
 
 **Checklist for new use cases** (use in Operations section as task order):
 
@@ -236,7 +236,7 @@ HTTP → *UseCaseResource → *UseCasesService → *Factory → UseCase
 
 **Hooks (override when needed):** `afterFindOne`, `beforeCreation`, `afterCreation`, `beforeOverwrite`, `afterOverWrite`, `beforeDelete`, `afterDelete`, `afterDeleteCommit`, etc.
 
-Paging types are `Page`, `PageRequest`, and `Sort` in `org.executor.utils.repositories`. `PageableSortValidator` rejects unknown sort paths via the JPA metamodel, including nested and embedded paths.
+Paging types are `Page`, `PageRequest`, and `Sort` in `org.opendatamesh.platform.up.executor.gitlab.utils.repositories`. `PageableSortValidator` rejects unknown sort paths via the JPA metamodel, including nested and embedded paths.
 
 **HTTP:** Prefer `*Resource` methods; path id overrides body before the call. The JAX-RS resource is `@Path` in the adopting service, not under a versioned `rest` package.
 
