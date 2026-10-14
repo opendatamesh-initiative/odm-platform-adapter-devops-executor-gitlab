@@ -1,0 +1,16 @@
+spec: backend-service-template-state
+specVersion: "1.0.0"
+templateName: blindata-backend-service-template-quarkus
+templateVersion: "1.0.2"
+modules:
+  - usecases
+  - http-service
+  - rest-client
+parameters:
+  groupId: org.opendatamesh
+  artifactId: odm-platform-adapter-devops-executor-gitlab
+  serviceName: executor-gitlab
+  serviceClassPrefix: ExecutorGitlab
+  basePackage: org.opendatamesh.platform.up.executor.gitlab
+  basePackagePath: org/opendatamesh/platform/up/executor/gitlab
+  description: DevOps executor for GitLab CI/CD pipelines
