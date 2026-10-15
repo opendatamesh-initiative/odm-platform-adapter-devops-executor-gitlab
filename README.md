@@ -58,7 +58,7 @@ Errors:
 
 | Status | When |
 | --- | --- |
-| **400** | Missing `executorParameters`, `providerRunId` or `x-odm-token`. The instance is not in `allowed-base-urls`. A required input has no value. GitLab rejected the request (for example a type, `options` or `regex` mismatch in an input). |
+| **400** | Missing `executorParameters`, `dataProductRepo.externalIdentifier`, `providerRunId` or `x-odm-token`. The instance is not in `allowed-base-urls`. A required input has no value. GitLab rejected the request (for example a type, `options` or `regex` mismatch in an input). |
 | **404** | The project or the pipeline is unknown to GitLab. |
 | **409** | Cancel of a pipeline that has already ended (`success`, `failed`, `skipped` or `canceled`). |
 | **502** | GitLab refused the token, or GitLab is unavailable. |
@@ -70,11 +70,23 @@ The executor reads these fields:
 
 | Field | Use |
 | --- | --- |
-| `providerBaseUrl` | GitLab instance. A blank value falls back to `default-base-url`. Any other value must be listed in `allowed-base-urls`. |
-| `externalIdentifier` | GitLab project (id or full path). |
+| `dataProductRepo.providerBaseUrl` | GitLab instance. A blank value falls back to `default-base-url`. Any other value must be listed in `allowed-base-urls`. |
+| `dataProductRepo.externalIdentifier` | GitLab project (id or full path). Required. |
 | `ref.name` | Branch or tag. GitLab resolves it. |
 
-`pipelineIdentifier` and `ref.type` are ignored. The ref is resolved by GitLab, so the executor does not check whether it is a branch or a tag.
+Other fields, such as `dataProductRepo.providerType`, `name` and `defaultBranch`, `repositoryKey`, `pipelineIdentifier` and `ref.type`, are ignored. The ref is resolved by GitLab, so the executor does not check whether it is a branch or a tag.
+
+Example:
+
+```json
+{
+  "dataProductRepo": {
+    "providerBaseUrl": "https://gitlab.com",
+    "externalIdentifier": "blindata/dumb-pipeline"
+  },
+  "ref": { "name": "main", "type": "BRANCH" }
+}
+```
 
 ## Token
 
@@ -127,6 +139,8 @@ GitLab computes the input spec in the background and caches it. When the cache i
 | `failed`, `skipped` | `FAILED` |
 | `canceled` (from DevOps, the GitLab UI, or GitLab auto-cancel) | `CANCELED` |
 | any other value | `RUNNING` (the DevOps poll cap bounds the wait) |
+
+A cancelled pipeline stays in GitLab's `canceling` state for up to about a minute, so a status read right after a cancel still returns `RUNNING` until GitLab reports `canceled`.
 
 `manual` stays `RUNNING`. If nobody runs the manual job, the DevOps poll cap fails the task.
 
