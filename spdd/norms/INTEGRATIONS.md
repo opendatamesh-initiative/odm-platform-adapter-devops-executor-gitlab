@@ -31,4 +31,4 @@ How the service talks to systems it does not own — outbound calls and inbound 
 
 ---
 
-**Template support:** outbound HTTP goes through `RestUtils` (`utils.client`), built with `RestUtilsFactory` (`getRestUtils`, `getAuthenticatedRestUtils`, `getAsyncRestUtils`, `getAuthenticatedAsyncRestUtils`). Expose one qualified `RestUtils` bean per external system so tests can replace it. Remote errors arrive as `ClientException` / `ClientResourceMappingException` and are translated inside the client.
+**Template support (module `rest-client`):** outbound HTTP goes through `RestUtils` (`utils.client`), built with `RestUtilsFactory` (`getRestUtils`, `getAuthenticatedRestUtils`, `getAsyncRestUtils`, `getAuthenticatedAsyncRestUtils`). Expose one qualified `RestUtils` bean per external system so tests can replace it. Remote errors arrive as `ClientException` / `ClientResourceMappingException` and are translated inside the client.

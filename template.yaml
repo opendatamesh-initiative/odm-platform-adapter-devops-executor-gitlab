@@ -1,7 +1,7 @@
 spec: backend-service-template-state
 specVersion: "1.0.0"
 templateName: blindata-backend-service-template-quarkus
-templateVersion: "1.0.2"
+templateVersion: "1.1.0"
 modules:
   - usecases
   - http-service
