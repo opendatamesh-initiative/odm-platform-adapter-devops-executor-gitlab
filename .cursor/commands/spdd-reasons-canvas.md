@@ -66,7 +66,7 @@ Input can be provided in two ways:
 
    d. The **N — Norms** section MUST cite only `spdd/norms/...` paths you read in this step and MUST NOT invent standards that contradict those files
 
-   **Norms read gate**: If README cannot be read, or any required derived norm file cannot be read, report the error and STOP — do not generate the canvas or write `spdd/prompt/*.md` until resolved.
+   **Norms read gate**: If README cannot be read, or any required derived norm file cannot be read, report the error and STOP — do not generate the canvas or write `spdd/prompt/*.md` until resolved. Exception: a norm file whose **Module** in the Norm index is not listed under `modules` in `template.yaml` is not rendered in this service. Skip it without stopping, and do not plan code that uses the types it describes.
 
 3. **Read relevant codebase context**
    - Search for related existing implementations
